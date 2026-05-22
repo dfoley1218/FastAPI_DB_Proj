@@ -1,28 +1,36 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Depends
 from app.schemas import PostCreate
+from app.db import Post, create_db_and_tables, get_async_session
+from sqlalchemy.ext.asyncio import AsyncSession
+from contextlib import asynccontextmanager
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await create_db_and_tables()
+    yield
 
 app = FastAPI()
 
-text_posts = {1: {"title": "New Post", "content": "This is a new post"}}
+@app.post("/upload")
+async def upload_file(
+    file: UploadFile = File(...),
+    caption: str = Form(...),
+    session: AsyncSession = Depends(get_async_session)
+):
+    
+    post = Post(
+        caption=caption,
+        url="dummyurl",
+        file_type="photo",
+        file_name="dummyname"
+    )
+    session.add(post)
+    await session.commit()
+    await session.refresh(post)
+    return post
 
-@app.get("/posts")
-def get_all_posts(limit: int = 10):
-    if limit:
-        return list(text_posts.values())[:limit]
-    return text_posts
 
-@app.get("/posts/{id}")
-def get_post(id: int):
-    if id not in text_posts:
-        raise HTTPException(status_code=404, detail="Post not found")
-    return text_posts.get(id)
-
-# post endpoint
-@app.post("/posts")
-def create_post(post: PostCreate) -> PostCreate:
-    new_post = {"title": post.title, "content": post.content}
-    text_posts[max(text_posts.keys()) + 1] = {"title": post.title, "content": post.content}
-    return new_post
 
 
 
