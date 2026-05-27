@@ -1,7 +1,19 @@
+"""
+FastAPI application — route definitions.
+
+Endpoints:
+  POST /upload  Accepts a multipart form (file + caption). Writes a Post record
+                to the database and returns the saved row as JSON.
+                File upload to ImageKit is stubbed with placeholder values for now.
+
+  GET  /feed    Returns all posts ordered newest-first as a JSON array.
+
+The `lifespan` context manager runs once on startup: it calls `create_db_and_tables`
+so the SQLite schema is automatically created before the first request arrives.
+"""
 from select import select
 
-from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Depends
-from app.schemas import PostCreate
+from fastapi import FastAPI, File, UploadFile, Form, Depends
 from app.db import Post, create_db_and_tables, get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from contextlib import asynccontextmanager
@@ -12,7 +24,7 @@ async def lifespan(app: FastAPI):
     await create_db_and_tables()
     yield
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 @app.post("/upload")
 async def upload_file(

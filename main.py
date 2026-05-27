@@ -1,3 +1,10 @@
+"""
+Entry point for the FastAPI application.
+
+Starts the Uvicorn ASGI server pointing at the `app` object inside app/app.py.
+`reload=True` watches for file changes and restarts automatically during development.
+Run with: python main.py
+"""
 import uvicorn
 
 if __name__ == "__main__":
